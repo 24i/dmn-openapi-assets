@@ -249,6 +249,25 @@ components:
                         code: '10201'
                         title: 'Invalid api key'
                         detail: 'Invalid authorization api key: Unauthorized Api key provided in the header'
+    403:
+      description: Forbidden
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '403'
+                        code: '10201'
+                        title: 'FORBIDDEN'
+                        detail: 'The authenticated credentials do not have permissions to access to requested resource'
     404:
       description: Not Found
       content:
@@ -268,6 +287,81 @@ components:
                         code: '32100'
                         title: 'Not Found'
                         detail: 'The requested Resource does not exist'
+    409:
+      description: Conflict
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '409'
+                        code: '32100'
+                        title: 'CONFLICT'
+                        detail: 'There was a conflict with the request and the current state of the data'
+    413:
+      description: Payload Too Large
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '413'
+                        code: '10100'
+                        title: 'Payload Too Large'
+                        detail: 'Request payload is too large'
+    500:
+      description: Internal Server Error
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '500'
+                        title: 'Internal Server Error'
+                        detail: 'An error occurred while processing the request'
+    503:
+      description: Service Unavailable
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '503'
+                        code: '10000'
+                        title: 'Service Unavailable'
+                        detail: 'Service is currently not available'
 
   #########################
   # Common headers
