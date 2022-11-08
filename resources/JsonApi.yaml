@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: JSON:API
+  description: Common OpenAPI schemas for JSON:API components
+  version: 1.0.0
+servers: []
+
+paths: {}
+
+components:
+  #####################
+  # Common data objects
+  #####################
+  schemas:
+    #####################
+    # JSON:API
+    #####################
+    Id:
+      type: string
+      description: The ID of the resource being referenced
+      example: 'e022f021-11f5-4cd6-89f2-02535d89eed6'
+
+    Type:
+      type: string
+      description: Used to describe resource objects that share common attributes and relationships.
+      example: 'ResourceObject'
+
+    Attributes:
+      type: object
+      description: An attributes object representing some of the resource’s data.
+      additionalProperties: true
+
+    Relationships:
+      type: object
+      description: A relationships object describing relationships between the resource and other JSON:API resources.
+      additionalProperties:
+        type: object
+        required:
+          - data
+        properties:
+          data:
+            oneOf:
+              - $ref: '#/components/schemas/ResourceIdentifier'
+              - type: array
+                items:
+                  $ref: '#/components/schemas/ResourceIdentifier'
+
+    Links:
+      type: object
+      description: A links object containing links related to the resource.
+
+    Meta:
+      type: object
+      description: A meta object containing non-standard meta-information about a resource that can not be represented as an attribute or relationship.
+      additionalProperties: true
+
+    ResourceIdentifier:
+      type: object
+      required:
+        - type
+        - id
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          $ref: '#/components/schemas/Type'
+        id:
+          $ref: '#/components/schemas/Id'
+
+    Resource:
+      allOf:
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              $ref: '#/components/schemas/Type'
+            id:
+              $ref: '#/components/schemas/Id'
+            attributes:
+              $ref: '#/components/schemas/Attributes'
+            relationships:
+              $ref: '#/components/schemas/Relationships'
+            links:
+              $ref: '#/components/schemas/Links'
+            meta:
+              $ref: '#/components/schemas/Meta'
+
+    Error:
+      type: object
+      required:
+        - id
+        - status
+        - code
+        - title
+        - details
+      properties:
+        id:
+          type: string
+          description: A unique identifier for this particular occurrence of the problem.
+        status:
+          type: string
+          description: The HTTP status code applicable to this problem, expressed as a string value.
+        code:
+          type: string
+          description: An application-specific error code, expressed as a string value.
+        title:
+          type: string
+          description: A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem.
+        details:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+      example:
+        id: "6de7da3e-8877-4f2b-a670-16e18e5d79a0"
+        status: "400"
+        code: "31201"
+        title: "Bad Request"
+        detail: "Parameter 'Foo' is invalid"
+
+  ####################
+  # Common parameters
+  ####################
+  parameters:
+    idempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      description: "Client unique generated value for server to recognize subsequent retries"
+      schema:
+        type: string
+      example: "518d5812-b8e8-43a4-b3b0-8f9c5cdc31b9"
+    pageNumber:
+      in: query
+      name: page[number]
+      required: false
+      example: 1
+      schema:
+        type: number
+        minimum: 1
+      description: Page number if the results have more items than items per page. Default = 1.
+    offsetParam:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        minimum: 0
+      description: The number of items to skip before returning the results
+    limitParam:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: The number of items to return
+    language:
+      name: language
+      in: query
+      required: false
+      description: "The PK of the language to use, which will be a 3 character ISO 639-2 string (e.g.: fin). If this is omitted the system defined default will be used. If the requested language is not available then the system will return translations in order of the system defined preferences"
+      schema:
+        type: string
+
+  #######################
+  # Common request bodies
+  #######################
+  requestBodies:
+    NewItem:
+      description: A JSON object containing item data
+      required: true
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+
+  ####################
+  # Common responses
+  ####################
+  responses:
+    Document:
+      description: A document response
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            properties:
+              data:
+                oneOf:
+                  - $ref: '#/components/schemas/Resource'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+              included:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+              meta:
+                type: object
+    Error:
+      description: An error response
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
+    400:
+      description: Bad Request
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '400'
+                        code: '10201'
+                        title: 'Bad Request'
+                        detail: 'Invalid request'
+    401:
+      description: Unauthorized
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '401'
+                        code: '10201'
+                        title: 'Invalid api key'
+                        detail: 'Invalid authorization api key: Unauthorized Api key provided in the header'
+    403:
+      description: Forbidden
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '403'
+                        code: '10201'
+                        title: 'FORBIDDEN'
+                        detail: 'The authenticated credentials do not have permissions to access to requested resource'
+    404:
+      description: Not Found
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '404'
+                        code: '32100'
+                        title: 'Not Found'
+                        detail: 'The requested Resource does not exist'
+    409:
+      description: Conflict
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '409'
+                        code: '32100'
+                        title: 'CONFLICT'
+                        detail: 'There was a conflict with the request and the current state of the data'
+    413:
+      description: Payload Too Large
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '413'
+                        code: '10100'
+                        title: 'Payload Too Large'
+                        detail: 'Request payload is too large'
+    500:
+      description: Internal Server Error
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '500'
+                        title: 'Internal Server Error'
+                        detail: 'An error occurred while processing the request'
+    503:
+      description: Service Unavailable
+      content:
+        application/vnd.api+json:
+          schema:
+            type: object
+            required:
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Error'
+                    - example:
+                        status: '503'
+                        code: '10000'
+                        title: 'Service Unavailable'
+                        detail: 'Service is currently not available'
+
+  #########################
+  # Common headers
+  # (except request headers - they are defined as parameters)
+  #########################
+  headers: {}
