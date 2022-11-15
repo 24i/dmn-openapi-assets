@@ -117,6 +117,34 @@ components:
         title: "Bad Request"
         detail: "Parameter 'Foo' is invalid"
 
+    ################
+    # Common schemas
+    ################
+    CreateResourceIdentifier:
+      type: object
+      required:
+        - type
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          $ref: '#/components/schemas/Type'
+
+    LocalizedString:
+      type: object
+      description: Representation of localized string format consumed by API
+      required:
+        - lang
+        - value
+      properties:
+        lang:
+          type: string
+          example: "eng"
+          description: The ISO 639-2 three letter code of the language
+        value:
+          type: string
+          example: "English string"
+
   ####################
   # Common parameters
   ####################
